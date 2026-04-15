@@ -1,65 +1,215 @@
-import Image from "next/image";
+'use client'
+
+import { useRef, useState } from 'react'
+
+function randNum(length: number) {
+  let result = ''
+  for (let i = 0; i < length; i++) {
+    result += Math.floor(Math.random() * 10)
+  }
+  return result
+}
+
+function generateToken() {
+  return `${randNum(4)}-${randNum(4)}-${randNum(4)}-${randNum(4)}-${randNum(4)}`
+}
+
+function generateRef() {
+  const prefix = new Date().toISOString().slice(2, 10).replace(/-/g, '')
+  const middle = Date.now().toString()
+  const random = randNum(32 - (prefix.length + middle.length))
+  return (prefix + middle + random).slice(0, 32)
+}
+
+function formatRp(num: number) {
+  return num.toLocaleString('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
+
+function formatKwh(value: string) {
+  const num = parseFloat(value)
+  if (isNaN(num)) return ''
+  return num.toLocaleString('id-ID', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
+}
 
 export default function Home() {
+  const [nama, setNama] = useState('')
+  const [kwh, setKwh] = useState('')
+
+  const [token, setToken] = useState('')
+  const [ref, setRef] = useState('')
+
+  const strukRef = useRef<HTMLDivElement>(null)
+
+  const handleGenerate = async () => {
+    const newToken = generateToken()
+    const newRef = generateRef()
+
+    setToken(newToken)
+    setRef(newRef)
+
+    setTimeout(async () => {
+      if (!strukRef.current) return
+
+      const html2pdf = (await import('html2pdf.js')).default
+
+      html2pdf()
+        .set({
+          margin: 10,
+          filename: 'struk-pln.pdf',
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: 'landscape' }
+        })
+        .from(strukRef.current)
+        .save()
+    }, 100)
+  }
+
+  const total = 100000
+  const admin = 1600
+  const ppj = total * 0.04
+  const tokenRp = total - ppj
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main style={{ padding: 20, background: '#f3f4f6', minHeight: '100vh' }}>
+
+      {/* FONT */}
+      <link rel="preconnect" href="https://fonts.googleapis.com"/>
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
+      <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet"/>
+
+      <h2>Generator Struk PLN</h2>
+      <p style={{ marginBottom: 20, color: '#555' }}>
+        Isi nama pelanggan dan jumlah KWH, lalu klik Download PDF
+      </p>
+
+      {/* FORM */}
+      <div style={{
+        background: 'white',
+        padding: 20,
+        borderRadius: 10,
+        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+        width: 350,
+        marginBottom: 30
+      }}>
+        <label><b>Nama Pelanggan</b></label>
+        <input
+          placeholder="Contoh: Budi Santoso"
+          value={nama}
+          onChange={(e) => setNama(e.target.value)}
+          style={{ width: '100%', margin: '5px 0 15px', padding: 8 }}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+        <label><b>Jumlah KWH</b></label>
+        <input
+          type="text"
+          placeholder="Contoh: 29,80"
+          value={kwh}
+          onChange={(e) => {
+            const value = e.target.value.replace(',', '.')
+            setKwh(value)
+          }}
+          style={{ width: '100%', margin: '5px 0 15px', padding: 8 }}
+        />
+
+        <button
+          onClick={handleGenerate}
+          style={{
+            width: '100%',
+            padding: 10,
+            background: '#2563eb',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer'
+          }}
+        >
+          Download PDF
+        </button>
+      </div>
+
+      {/* STRUK */}
+      <div
+        ref={strukRef}
+        style={{
+          padding: 20,
+          fontFamily: 'Courier Prime, monospace',
+          background: 'white',
+          width: '900px',
+          lineHeight: 1.3,
+          fontSize: 13
+        }}
+      >
+        <h3 style={{ textAlign: 'center', marginBottom: 15 }}>
+          STRUK BUKTI PEMBELIAN PLN PRABAYAR
+        </h3>
+
+        <div className="grid4">
+          <div>NO METER</div><div>: 22107697064</div>
+          <div>ADMIN BANK</div><div>: Rp {formatRp(admin)}</div>
+
+          <div>NAMA</div><div>: {nama}</div>
+          <div>METERAI</div><div>: Rp 0,00</div>
+
+          <div>TARIF/DAYA</div><div>: R1/</div>
+          <div>PPn</div><div>: Rp 0,00</div>
+
+          <div>MKM REFF</div><div>: {ref}</div>
+          <div>PPJ</div><div>: Rp {formatRp(ppj)}</div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="divider" />
+
+        <div className="grid4">
+          <div>RP BAYAR</div><div>: Rp {formatRp(total)}</div>
+          <div>ANGSURAN</div><div>: Rp 0,00</div>
         </div>
-      </main>
-    </div>
-  );
+
+        <div className="grid-right">
+          <div>RP TOKEN</div><div>: Rp {formatRp(tokenRp)}</div>
+          <div>JML KWH</div><div>: {formatKwh(kwh)}</div>
+        </div>
+
+        <div className="divider" />
+
+        <h2 style={{ textAlign: 'center', marginTop: 10 }}>
+          TOKEN : {token}
+        </h2>
+
+        <p style={{ textAlign: 'center', marginTop: 10 }}>TERIMA KASIH</p>
+        <p style={{ textAlign: 'center', fontSize: 12 }}>
+          "Rincian tagihan dapat dilihat di www.pln.co.id atau PLN terdekat"
+        </p>
+        <p style={{ textAlign: 'center' }}>
+          INFORMASI HUB : 123
+        </p>
+      </div>
+
+      <style jsx>{`
+        .grid4 {
+          display: grid;
+          grid-template-columns: 120px 200px 120px 200px;
+          row-gap: 6px;
+        }
+
+        .grid-right {
+          display: grid;
+          grid-template-columns: 120px 200px;
+          width: fit-content;
+          margin-left: auto;
+          row-gap: 6px;
+        }
+
+        .divider {
+          border-top: 1px solid black;
+          margin: 10px 0;
+        }
+      `}</style>
+    </main>
+  )
 }
