@@ -72,7 +72,7 @@ export default function Home() {
 
   const total = 100000
   const admin = 1600
-  const ppj = total * 0.04
+  const ppj = 4546
   const tokenRp = total - ppj
 
   return (
@@ -150,7 +150,7 @@ export default function Home() {
         </h3>
 
         <div className="grid4">
-          <div>NO METER</div><div>: 22107697064</div>
+          <div>NO METER</div><div>: 32166085228</div>
           <div>ADMIN BANK</div><div>: Rp {formatRp(admin)}</div>
 
           <div>NAMA</div><div>: {nama}</div>
