@@ -37,9 +37,30 @@ function formatKwh(value: string) {
   })
 }
 
+// 🔥 FIX TANGGAL (manual parsing, no Date bug)
+function formatTanggal(value: string) {
+  if (!value) return ''
+
+  const [datePart, timePart] = value.split('T')
+  if (!datePart || !timePart) return ''
+
+  const [year, month, day] = datePart.split('-')
+  const [hour, minute] = timePart.split(':')
+
+  // generate detik biar keliatan real
+  const second = new Date().getSeconds().toString().padStart(2, '0')
+
+  return `${day}/${month}/${year} ${hour}:${minute}:${second}`
+}
+
 export default function Home() {
   const [nama, setNama] = useState('')
   const [kwh, setKwh] = useState('')
+
+  // ✅ default langsung ke sekarang
+  const [tanggal, setTanggal] = useState(
+    new Date().toISOString().slice(0,16)
+  )
 
   const [token, setToken] = useState('')
   const [ref, setRef] = useState('')
@@ -85,7 +106,7 @@ export default function Home() {
 
       <h2>Generator Struk PLN</h2>
       <p style={{ marginBottom: 20, color: '#555' }}>
-        Isi nama pelanggan dan jumlah KWH, lalu klik Download PDF
+        Isi data lalu klik Download PDF
       </p>
 
       {/* FORM */}
@@ -114,6 +135,14 @@ export default function Home() {
             const value = e.target.value.replace(',', '.')
             setKwh(value)
           }}
+          style={{ width: '100%', margin: '5px 0 15px', padding: 8 }}
+        />
+
+        <label><b>Tanggal Bayar</b></label>
+        <input
+          type="datetime-local"
+          value={tanggal}
+          onChange={(e) => setTanggal(e.target.value)}
           style={{ width: '100%', margin: '5px 0 15px', padding: 8 }}
         />
 
@@ -151,13 +180,13 @@ export default function Home() {
 
         <div className="grid4">
           <div>NO METER</div><div>: 32166085228</div>
-          <div>ADMIN BANK</div><div>: Rp {formatRp(admin)}</div>
+          <div>TGL BAYAR</div><div>: {formatTanggal(tanggal)}</div>
 
           <div>NAMA</div><div>: {nama}</div>
-          <div>METERAI</div><div>: Rp 0,00</div>
+          <div>ADMIN BANK</div><div>: Rp {formatRp(admin)}</div>
 
           <div>TARIF/DAYA</div><div>: R1/</div>
-          <div>PPn</div><div>: Rp 0,00</div>
+          <div>METERAI</div><div>: Rp 0,00</div>
 
           <div>MKM REFF</div><div>: {ref}</div>
           <div>PPJ</div><div>: Rp {formatRp(ppj)}</div>
